@@ -2,8 +2,8 @@ from flask import Flask , request, jsonify, Blueprint
 
 yeast_bp = Blueprint('yeast', __name__)
 
-yeasts = [("saf-instant", "Instant Yeast"),
-          ("fleichmanns", "Active Dry Yeast")
+yeasts = [("instant", "Instant Yeast"),
+          ("Active Dry", "Active Dry Yeast")
          ]
 
 @yeast_bp.route('/', methods=['GET'] )
