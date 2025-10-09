@@ -1,7 +1,8 @@
 from flask import Flask
 from weather.weather import weather_bp
-from ingridiens.flour import flour_bp 
-from ingridiens.yeast import yeast_bp
+from ingredients.flour import flour_bp 
+from ingredients.yeast import yeast_bp
+from ingredients.dough import dough_bp
 
 app = Flask('pizza_daw_maker')
 app.register_blueprint(weather_bp, url_prefix='/weather')
