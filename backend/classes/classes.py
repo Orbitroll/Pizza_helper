@@ -7,6 +7,26 @@ geo_search = "https://geocoding-api.open-meteo.com/v1/search"
 get_temperature = "https://api.open-meteo.com/v1/forecast"
 
 class Weather:
+    def get_location_name(self, latitude: float, longitude: float):
+        try:
+            # Use OpenStreetMap Nominatim for reverse geocoding
+            headers = {'User-Agent': 'PizzaHelper/1.0'}
+            res = requests.get(
+                "https://nominatim.openstreetmap.org/reverse",
+                params={"lat": latitude, "lon": longitude, "format": "json"},
+                headers=headers,
+                timeout=10
+            )
+            if res.status_code == 200:
+                data = res.json()
+                address = data.get("address", {})
+                # Try to find the most relevant name
+                return address.get("city") or address.get("town") or address.get("village") or address.get("suburb") or address.get("county")
+        except Exception as e:
+            print(f"Error getting location: {e}")
+            pass
+        return None
+
     def city(self, name: str, country_code: str | None = None):
         weather = requests.get(
             geo_search,

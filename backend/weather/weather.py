@@ -19,6 +19,14 @@ def temperature():
     longitude = request.args.get("longitude", type=float)
     if latitude is None or longitude is None:
         return jsonify({"error": "latitude and longitude query parameters are required"}), 400
-    result = Weather().temperature(latitude=latitude, longitude=longitude)
+    
+    weather_client = Weather()
+    result = weather_client.temperature(latitude=latitude, longitude=longitude)
+    
+    if "error" not in result:
+        location_name = weather_client.get_location_name(latitude, longitude)
+        if location_name:
+            result["location_name"] = location_name
+            
     return jsonify(result)
 # ...existing code...

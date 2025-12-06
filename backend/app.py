@@ -9,6 +9,6 @@ app.register_blueprint(weather_bp, url_prefix='/weather')
 app.register_blueprint(flour_bp, url_prefix='/flour')
 app.register_blueprint(yeast_bp, url_prefix='/yeast')
 app.register_blueprint(dough_bp, url_prefix='/dough')
-asdas
+
 if __name__ == "__main__":
     app.run(port=5000, host="0.0.0.0", debug=True)
