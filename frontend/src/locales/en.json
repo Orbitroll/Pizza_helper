@@ -1,6 +1,9 @@
 {
   "title": "Pizza Helper",
+  "back": "Back",
   "select_category": "Select Category",
+  "category_pizza": "Pizza",
+  "category_focaccia": "Focaccia",
   "recipes": "Recipes",
   "weather": "Weather",
   "calculate": "Calculate",
@@ -29,6 +32,7 @@
   "personal": "Personal",
   "family": "Family",
   "dough_calculator": "Dough Calculator",
+  "manual_temp": "Manual Temperature (Optional)",
   "instructions": "Instructions",
   "loading": "Loading...",
   "error": "Error",

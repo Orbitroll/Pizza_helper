@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
+import { Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { useAuth } from './AuthContext';
+import Login from './Login';
+import Register from './Register';
+import History from './History';
+import AdminDashboard from './AdminDashboard';
 import { recipes } from './recipes';
 import logo from './assets/pizzahelperlogo.png';
 import oliveFocacciaImg from './assets/photos/olive-focaccia.png';
@@ -49,8 +55,9 @@ function StepTimer({ duration, onComplete }) {
   );
 }
 
-function App() {
+function Home() {
   const { t, i18n } = useTranslation();
+  const { user, logout } = useAuth();
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [weather, setWeather] = useState(null);
@@ -62,17 +69,18 @@ function App() {
   const [timerDoneSteps, setTimerDoneSteps] = useState(new Set());
   const [bgIndex, setBgIndex] = useState(0);
 
+  // New state for calculator
+  const [numPizzas, setNumPizzas] = useState(4);
+  const [ballWeight, setBallWeight] = useState(250);
+  const [hydration, setHydration] = useState(60);
+  const [manualTemp, setManualTemp] = useState('');
+
   React.useEffect(() => {
     const interval = setInterval(() => {
       setBgIndex((prev) => (prev + 1) % backgroundImages.length);
     }, 5000);
     return () => clearInterval(interval);
   }, []);
-
-  // New state for calculator
-  const [numPizzas, setNumPizzas] = useState(4);
-  const [ballWeight, setBallWeight] = useState(250);
-  const [hydration, setHydration] = useState(60);
 
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
@@ -87,16 +95,7 @@ function App() {
     setError(null);
     setCompletedSteps(new Set());
     setTimerDoneSteps(new Set());
-    // Set default hydration from recipe or default to 60
     setHydration(recipe.hydration ? recipe.hydration * 100 : 60);
-  };
-
-  const handleStepComplete = (index) => {
-    setCompletedSteps(prev => {
-      const newSet = new Set(prev);
-      newSet.add(index);
-      return newSet;
-    });
   };
 
   const handleTimerDone = (index) => {
@@ -107,12 +106,35 @@ function App() {
     });
   };
 
-  const fetchWeatherAndCalculate = () => {
+  const fetchWeatherAndCalculate = async () => {
     setLoading(true);
     setError(null);
 
+    if (manualTemp !== '') {
+      try {
+        const temp = Number(manualTemp);
+        setWeather(temp);
+        setLocationName(null);
+
+        const yeastRes = await axios.get(`/api/dough/calculate_yeast`, {
+          params: {
+            hours: selectedRecipe.hours,
+            temperature: temp
+          }
+        });
+
+        setYeastResult(yeastRes.data);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to calculate");
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     if (!navigator.geolocation) {
-      setError("Geolocation is not supported by your browser");
+      setError("Geolocation is not supported by your browser. Please enter temperature manually.");
       setLoading(false);
       return;
     }
@@ -121,20 +143,14 @@ function App() {
       async (position) => {
         try {
           const { latitude, longitude } = position.coords;
-          
-          // 1. Get Weather
           const weatherRes = await axios.get(`/api/weather/temperature`, {
             params: { latitude, longitude }
           });
-          
-          // The backend returns { temperature: ..., ... }
           const temp = weatherRes.data.temperature !== undefined ? weatherRes.data.temperature : 20; 
           setWeather(temp);
           if (weatherRes.data.location_name) {
             setLocationName(weatherRes.data.location_name);
           }
-
-          // 2. Calculate Yeast
 
           const yeastRes = await axios.get(`/api/dough/calculate_yeast`, {
             params: {
@@ -152,10 +168,29 @@ function App() {
         }
       },
       (err) => {
-        setError("Unable to retrieve your location");
+        setError("Unable to retrieve your location. Please enter temperature manually.");
         setLoading(false);
       }
     );
+  };
+
+  const saveHistory = async () => {
+    if (!user || !yeastResult) return;
+    try {
+      await axios.post('/api/history/add', {
+        recipe_name: t(selectedRecipe.nameKey),
+        details: {
+          flour: Math.round((numPizzas * ballWeight) / (1 + (hydration/100) + 0.03 + (yeastResult.yeast_percentage/100))),
+          water: Math.round(((numPizzas * ballWeight) / (1 + (hydration/100) + 0.03 + (yeastResult.yeast_percentage/100))) * (hydration/100)),
+          salt: Math.round(((numPizzas * ballWeight) / (1 + (hydration/100) + 0.03 + (yeastResult.yeast_percentage/100))) * 0.03),
+          yeast: (((numPizzas * ballWeight) / (1 + (hydration/100) + 0.03 + (yeastResult.yeast_percentage/100))) * (yeastResult.yeast_percentage/100)).toFixed(2)
+        }
+      });
+      alert('Saved to history!');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to save history');
+    }
   };
 
   return (
@@ -174,6 +209,26 @@ function App() {
         transition: 'background-image 1s ease-in-out'
       }} />
       <div className="container">
+      <div className="auth-controls">
+        {user ? (
+          <>
+            <span style={{ background: 'rgba(255,255,255,0.8)', padding: '5px 10px', borderRadius: '15px' }}>
+              👤 {user.username}
+            </span>
+            {user.is_admin && (
+              <Link to="/admin" className="auth-btn" style={{ background: '#ffd700' }}>🛡️ Admin</Link>
+            )}
+            <Link to="/history" className="auth-btn">📜 History</Link>
+            <button onClick={logout} className="auth-btn" style={{ color: '#e74c3c' }}>Logout</button>
+          </>
+        ) : (
+          <>
+            <Link to="/login" className="auth-btn">Login</Link>
+            <Link to="/register" className="auth-btn">Register</Link>
+          </>
+        )}
+      </div>
+
       <header className="header">
         <div className="header-content">
           <img src={logo} alt="Pizza Helper Logo" className="app-logo" />
@@ -191,33 +246,33 @@ function App() {
 
       {!selectedRecipe ? (
         !selectedCategory ? (
-          <div className="category-selection fade-in">
-            <h2>{t('select_category')}</h2>
-            <div className="category-grid" style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px'}}>
+          <div className="category-selection zoom-in">
+            <h2 style={{fontSize: '2.5em', marginBottom: '40px', textShadow: '0 2px 4px rgba(0,0,0,0.1)'}}>{t('select_category')}</h2>
+            <div className="category-grid">
               <div className="card category-card" onClick={() => setSelectedCategory('pizza')}>
                 <img src="https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=600&q=80" alt="Pizza" className="recipe-image" />
                 <div className="card-content">
-                  <h3>🍕 Pizza</h3>
+                  <h3>🍕 {t('category_pizza')}</h3>
                 </div>
               </div>
               <div className="card category-card" onClick={() => setSelectedCategory('focaccia')}>
                 <img src={oliveFocacciaImg} alt="Focaccia" className="recipe-image" />
                 <div className="card-content">
-                  <h3>🍞 Focaccia</h3>
+                  <h3>🍞 {t('category_focaccia')}</h3>
                 </div>
               </div>
             </div>
           </div>
         ) : (
-          <div className="recipe-list fade-in">
+          <div className="recipe-list slide-up-fade">
             <button className="btn" onClick={() => setSelectedCategory(null)} style={{marginBottom: '20px'}}>
-              &larr; Back
+              &larr; {t('back')}
             </button>
-            <h2>{selectedCategory === 'pizza' ? '🍕 Pizza' : '🍞 Focaccia'}</h2>
+            <h2 style={{textAlign: 'center', fontSize: '2em', marginBottom: '30px'}}>{selectedCategory === 'pizza' ? `🍕 ${t('category_pizza')}` : `🍞 ${t('category_focaccia')}`}</h2>
             
-            <div className="category-grid" style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px'}}>
+            <div className="category-grid">
               {recipes.filter(r => r.category === selectedCategory).map((recipe) => (
-                <div key={recipe.id} className="card" onClick={() => handleRecipeClick(recipe)}>
+                <div key={recipe.id} className="card" onClick={() => handleRecipeClick(recipe)} style={{width: '300px'}}>
                   {recipe.image && <img src={recipe.image} alt={t(recipe.nameKey)} className="recipe-image" />}
                   <div className="card-content">
                     <h3>{t(recipe.nameKey)}</h3>
@@ -231,7 +286,7 @@ function App() {
       ) : (
         <div className="recipe-detail">
           <button className="btn" onClick={() => setSelectedRecipe(null)} style={{marginBottom: '20px'}}>
-            &larr; Back
+            &larr; {t('back')}
           </button>
           
           {selectedRecipe.image && <img src={selectedRecipe.image} alt={t(selectedRecipe.nameKey)} className="detail-image" />}
@@ -290,12 +345,26 @@ function App() {
                 onChange={(e) => setHydration(Number(e.target.value))}
               />
             </div>
+            <div className="input-group">
+              <label>{t('manual_temp')}</label>
+              <input 
+                type="number" 
+                value={manualTemp} 
+                onChange={(e) => setManualTemp(e.target.value)}
+                placeholder="e.g. 25"
+              />
+            </div>
           </div>
           
           <div className="action-area">
             <button className="btn" onClick={fetchWeatherAndCalculate} disabled={loading}>
               {loading ? t('loading') : t('calculate')}
             </button>
+            {user && yeastResult && (
+              <button className="btn" onClick={saveHistory} style={{ marginLeft: '10px', background: '#2ecc71' }}>
+                Save to History
+              </button>
+            )}
           </div>
 
           {error && <p style={{color: 'red'}}>{error}</p>}
@@ -383,4 +452,19 @@ function App() {
   );
 }
 
-export default App;
+import ChatBot from './ChatBot';
+
+export default function App() {
+  return (
+    <>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/history" element={<History />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+      </Routes>
+      <ChatBot />
+    </>
+  );
+}

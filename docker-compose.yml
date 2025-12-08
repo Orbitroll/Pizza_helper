@@ -1,12 +1,27 @@
 version: '3.8'
 
 services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=pizza_user
+      - POSTGRES_PASSWORD=pizza_password
+      - POSTGRES_DB=pizza_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
   backend:
     build: ./backend
     ports:
       - "6000:5000"
     volumes:
       - ./backend:/app
+    environment:
+      - DATABASE_URL=postgresql://pizza_user:pizza_password@db:5432/pizza_db
+    depends_on:
+      - db
 
   frontend:
     build: ./frontend
@@ -17,4 +32,8 @@ services:
       - /app/node_modules
     environment:
       - CHOKIDAR_USEPOLLING=true
+
+
+volumes:
+  postgres_data:
 

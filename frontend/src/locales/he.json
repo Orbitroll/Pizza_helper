@@ -1,6 +1,9 @@
 {
   "title": "עוזר הפיצה שלך",
+  "back": "חזור",
   "select_category": "בחר קטגוריה",
+  "category_pizza": "פיצה",
+  "category_focaccia": "פוקצ'ה",
   "recipes": "מתכונים",
   "weather": "מזג אוויר",
   "calculate": "חשב",
@@ -29,6 +32,7 @@
   "personal": "אישית",
   "family": "משפחתית",
   "dough_calculator": "מחשבון בצק",
+  "manual_temp": "טמפרטורה ידנית (אופציונלי)",
   "instructions": "הוראות",
   "loading": "טוען...",
   "error": "שגיאה",
