@@ -6,6 +6,7 @@ chat_bp = Blueprint('chat', __name__)
 
 # Configure Gemini API
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
@@ -17,7 +18,8 @@ def ask_bot():
     # 1. Try using Google Gemini (Free Tier) if Key is present
     if GEMINI_API_KEY:
         try:
-            model = genai.GenerativeModel('gemini-pro')
+            # Use gemini-flash-latest as it is available and likely has quota
+            model = genai.GenerativeModel('gemini-flash-latest')
             
             # Add system prompt context
             system_prompt = "You are an expert Italian Pizza Chef assistant. You help users with pizza dough recipes, fermentation, and baking tips. Keep answers concise and helpful."
@@ -26,7 +28,7 @@ def ask_bot():
             response = model.generate_content(full_prompt)
             return jsonify({'response': response.text})
         except Exception as e:
-            print(f"Gemini API Error: {e}")
+            print(f"ERROR: Gemini API Error: {e}", flush=True)
             # Fallback to local logic if API fails
             pass
 

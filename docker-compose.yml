@@ -20,6 +20,7 @@ services:
       - ./backend:/app
     environment:
       - DATABASE_URL=postgresql://pizza_user:pizza_password@db:5432/pizza_db
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     depends_on:
       - db
 
