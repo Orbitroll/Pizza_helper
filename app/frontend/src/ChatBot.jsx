@@ -55,7 +55,7 @@ export default function ChatBot() {
           <div className="chat-messages">
             {messages.map((msg, index) => (
               <div key={index} className={`message ${msg.sender}`}>
-                <div className="message-bubble">
+                <div className="message-bubble" dir="auto">
                   {msg.text}
                 </div>
               </div>
