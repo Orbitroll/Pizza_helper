@@ -1,9 +1,9 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_login import LoginManager
 from models import db, User
 import os
+from prometheus_flask_exporter import PrometheusMetrics
 
-# Blueprints
 from weather.weather import weather_bp
 from ingredients.flour import flour_bp 
 from ingredients.yeast import yeast_bp
@@ -13,6 +13,10 @@ from history import history_bp
 from chat import chat_bp
 
 app = Flask('pizza_daw_maker')
+metrics = PrometheusMetrics(app)
+
+metrics.info('app_info', 'Application info', version='1.0.3')
+
 app.config['SECRET_KEY'] = 'secret-key-goes-here'
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///db.sqlite')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -26,6 +30,22 @@ login_manager.login_view = 'auth.login'
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+@app.route('/health')
+def health():
+    return jsonify({"status": "healthy"}), 200
+
+@app.route('/health/ready')
+def ready():
+    try:
+        db.session.execute('SELECT 1')
+        return jsonify({"status": "ready"}), 200
+    except Exception:
+        return jsonify({"status": "not ready"}), 503
+
+@app.route('/health/live')
+def live():
+    return jsonify({"status": "alive"}), 200
 
 app.register_blueprint(weather_bp, url_prefix='/weather')
 app.register_blueprint(flour_bp, url_prefix='/flour')

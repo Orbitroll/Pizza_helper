@@ -49,7 +49,10 @@ resource "aws_eks_cluster" "pizza_helper_cluster" {
   upgrade_policy {
     support_type = "STANDARD"
   }
+}
 
-
-
+resource "aws_eks_addon" "ebs_csi_driver" {
+  cluster_name = aws_eks_cluster.pizza_helper_cluster.name
+  addon_name   = "aws-ebs-csi-driver"
+  addon_version = "v1.35.0-eksbuild.1" # You might need to adjust this version based on your K8s version
 }

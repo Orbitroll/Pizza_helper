@@ -30,6 +30,10 @@ resource "aws_iam_role_policy_attachment" "eks_registry_policy_attachment" {
   role       = aws_iam_role.eks_nodegroup_role.name
   
 }
+resource "aws_iam_role_policy_attachment" "eks_ebs_csi_policy_attachment" {
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+  role       = aws_iam_role.eks_nodegroup_role.name
+}
 resource "aws_eks_node_group" "pizza_helper_nodegroup" {
   cluster_name    = aws_eks_cluster.pizza_helper_cluster.name
   node_group_name = "pizza-helper-nodegroup"
@@ -50,7 +54,8 @@ resource "aws_eks_node_group" "pizza_helper_nodegroup" {
   depends_on = [
     aws_iam_role_policy_attachment.eks_nodegroup_role_policy_attachment,
     aws_iam_role_policy_attachment.eks_cni_policy_attachment,
-    aws_iam_role_policy_attachment.eks_registry_policy_attachment
+    aws_iam_role_policy_attachment.eks_registry_policy_attachment,
+    aws_iam_role_policy_attachment.eks_ebs_csi_policy_attachment
   ]
   tags = {
     Name = "Pizza-Helper-EKS-Nodegroup"

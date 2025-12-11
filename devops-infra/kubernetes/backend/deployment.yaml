@@ -26,3 +26,15 @@ spec:
               name: pizza-helper-secrets
               key: GEMINI_API_KEY
         imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 5000
+          initialDelaySeconds: 15
+          periodSeconds: 10

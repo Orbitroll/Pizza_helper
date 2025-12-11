@@ -16,5 +16,17 @@ spec:
       - name: frontend
         image: orbitroll/pizza-helper-frontend:latest
         ports:
-        - containerPort: 3000
+        - containerPort: 80
         imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10

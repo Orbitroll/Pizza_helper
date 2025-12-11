@@ -5,3 +5,6 @@ psycopg2-binary
 flask-login
 werkzeug
 google-generativeai
+gunicorn
+prometheus-flask-exporter
+pytest
