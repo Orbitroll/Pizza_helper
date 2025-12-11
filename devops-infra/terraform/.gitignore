@@ -5,3 +5,4 @@
 *.tfvars
 *.tfvars.json
 crash.log
+init_with_creds.ps1
