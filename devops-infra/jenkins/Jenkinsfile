@@ -1,11 +1,17 @@
 pipeline {
     agent any
     
+    parameters {
+        string(name: 'ENVIRONMENT', defaultValue: 'dev', description: 'Target environment (dev/prod)')
+    }
+    
     environment {
         DOCKER_HUB_USER = 'orbitroll'
-        IMAGE_TAG = "${env.BUILD_NUMBER}"
+        GIT_SHA = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+        IMAGE_TAG = "${env.BUILD_NUMBER}-${GIT_SHA}"
         REGISTRY_CREDENTIALS_ID = 'docker-hub-credentials'
         KUBECONFIG_CREDENTIALS_ID = 'kubeconfig-credentials'
+        CLUSTER_NAME = "pizza-helper-cluster-${params.ENVIRONMENT}"
     }
     
     stages {
@@ -80,8 +86,7 @@ pipeline {
                         usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY'),
                         string(credentialsId: 'aws-region', variable: 'AWS_DEFAULT_REGION')
                     ]) {
-                        // Update kubeconfig using AWS CLI
-                        sh "aws eks update-kubeconfig --name pizza-helper-cluster --region ${AWS_DEFAULT_REGION}"
+                        sh "aws eks update-kubeconfig --name ${CLUSTER_NAME} --region ${AWS_DEFAULT_REGION}"
                         
                         sh "kubectl apply -f devops-infra/kubernetes/namespace.yaml"
                         sh "kubectl apply -R -f devops-infra/kubernetes/ -n pizza-helper"
@@ -92,9 +97,7 @@ pipeline {
                         sh "kubectl rollout status deployment/pizza-helper-frontend -n pizza-helper"
                         sh "kubectl rollout status deployment/pizza-helper-backend -n pizza-helper"
                         
-                        // Verify Health Checks
                         sh "echo 'Verifying Backend Health...'"
-                        // We use a temporary pod to curl the internal service because LoadBalancers might take time or not be accessible from Jenkins
                         sh "kubectl run curl-test --image=curlimages/curl --restart=Never --rm -i -- curl -sS http://backend.pizza-helper.svc.cluster.local:5000/health"
                     }
                 }
@@ -105,6 +108,19 @@ pipeline {
     post {
         always {
             cleanWs()
+        }
+        failure {
+            script {
+                echo "Deployment failed! Initiating rollback..."
+                withCredentials([
+                    usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY'),
+                    string(credentialsId: 'aws-region', variable: 'AWS_DEFAULT_REGION')
+                ]) {
+                    sh "aws eks update-kubeconfig --name pizza-helper-cluster --region ${AWS_DEFAULT_REGION}"
+                    sh "kubectl rollout undo deployment/pizza-helper-frontend -n pizza-helper"
+                    sh "kubectl rollout undo deployment/pizza-helper-backend -n pizza-helper"
+                }
+            }
         }
     }
 }

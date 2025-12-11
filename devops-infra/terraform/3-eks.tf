@@ -22,7 +22,7 @@ resource "aws_iam_role_policy_attachment" "eks_cluter_policy_attachment" {
   
 }
 resource "aws_eks_cluster" "pizza_helper_cluster" {
-  name     = "pizza-helper-cluster"
+  name     = "pizza-helper-cluster-${terraform.workspace}"
   role_arn = aws_iam_role.cluster.arn
 
   vpc_config {
@@ -42,7 +42,7 @@ resource "aws_eks_cluster" "pizza_helper_cluster" {
     aws_iam_role_policy_attachment.eks_cluter_policy_attachment
   ]
   tags = {
-    Name = "Pizza-Helper-EKS-Cluster"
+    Name = "Pizza-Helper-EKS-Cluster-${terraform.workspace}"
   }
 
   bootstrap_self_managed_addons = true

@@ -9,7 +9,7 @@ resource "aws_vpc" "pizza_helper_vpc" {
     cidr_block = var.cidr-block
     enable_dns_hostnames = alltrue([true])
     tags = {
-        Name = "Pizza-Helper"
+        Name = "Pizza-Helper-${terraform.workspace}"
     }
   
 }
@@ -19,9 +19,9 @@ resource "aws_subnet" "public_pizza_helper_subnet-1" {
     cidr_block = cidrsubnet(var.cidr-block, 8, 0)
     availability_zone = data.aws_availability_zones.az.names[0]
     tags = {
-        Name = "Public-Pizza-Helper-Subnet-1"
+        Name = "Public-Pizza-Helper-Subnet-1-${terraform.workspace}"
         "kubernetes.io/role/elb" = "1"
-        "kubernetes.io/cluster/pizza-helper-cluster" = "shared"
+        "kubernetes.io/cluster/pizza-helper-cluster-${terraform.workspace}" = "shared"
     }
   
 }
@@ -31,9 +31,9 @@ resource "aws_subnet" "public_pizza_helper_subnet-2" {
     cidr_block = cidrsubnet(var.cidr-block, 8, 2)
     availability_zone = data.aws_availability_zones.az.names[1]
     tags = {
-        Name = "Public-Pizza-Helper-Subnet-2"
+        Name = "Public-Pizza-Helper-Subnet-2-${terraform.workspace}"
         "kubernetes.io/role/elb" = "1"
-        "kubernetes.io/cluster/pizza-helper-cluster" = "shared"
+        "kubernetes.io/cluster/pizza-helper-cluster-${terraform.workspace}" = "shared"
     }
   
 }
@@ -42,7 +42,7 @@ resource "aws_subnet" "privete_pizza_helper_subnet-1" {
     cidr_block = cidrsubnet(var.cidr-block, 8, 1)
     availability_zone = data.aws_availability_zones.az.names[0]
     tags = {
-        Name = "Private-Pizza-Helper-Subnet-1"
+        Name = "Private-Pizza-Helper-Subnet-1-${terraform.workspace}"
     }
   
 }
