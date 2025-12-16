@@ -11,7 +11,7 @@ provider "kubernetes" {
   insecure = true
 }
 
-resource "kubernetes_namespace" "pizza_helper" {
+resource "kubernetes_namespace_v1" "pizza_helper" {
   metadata {
     name = "pizza-helper"
   }

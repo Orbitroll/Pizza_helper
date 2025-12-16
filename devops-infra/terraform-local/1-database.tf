@@ -1,7 +1,7 @@
-resource "kubernetes_deployment" "postgres" {
+resource "kubernetes_deployment_v1" "postgres" {
   metadata {
     name = "postgres"
-    namespace = kubernetes_namespace.pizza_helper.metadata[0].name
+    namespace = kubernetes_namespace_v1.pizza_helper.metadata[0].name
   }
 
   spec {
@@ -46,10 +46,10 @@ resource "kubernetes_deployment" "postgres" {
   }
 }
 
-resource "kubernetes_service" "postgres" {
+resource "kubernetes_service_v1" "postgres" {
   metadata {
     name      = "db"
-    namespace = kubernetes_namespace.pizza_helper.metadata[0].name
+    namespace = kubernetes_namespace_v1.pizza_helper.metadata[0].name
   }
 
   spec {

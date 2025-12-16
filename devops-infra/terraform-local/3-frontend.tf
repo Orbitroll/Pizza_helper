@@ -1,7 +1,7 @@
-resource "kubernetes_deployment" "frontend" {
+resource "kubernetes_deployment_v1" "frontend" {
   metadata {
     name      = "pizza-helper-frontend"
-    namespace = kubernetes_namespace.pizza_helper.metadata[0].name
+    namespace = kubernetes_namespace_v1.pizza_helper.metadata[0].name
   }
 
   spec {
@@ -34,10 +34,10 @@ resource "kubernetes_deployment" "frontend" {
   }
 }
 
-resource "kubernetes_service" "frontend" {
+resource "kubernetes_service_v1" "frontend" {
   metadata {
     name      = "pizza-helper-frontend"
-    namespace = kubernetes_namespace.pizza_helper.metadata[0].name
+    namespace = kubernetes_namespace_v1.pizza_helper.metadata[0].name
   }
 
   spec {
