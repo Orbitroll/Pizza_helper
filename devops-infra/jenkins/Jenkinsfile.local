@@ -1,0 +1,43 @@
+pipeline {
+    agent any
+    
+    environment {
+        KUBECONFIG = credentials('kubeconfig-local')
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'master', url: 'https://github.com/Orbitroll/Pizza_helper.git'
+            }
+        }
+        
+        stage('Deploy to Local K8s') {
+            agent {
+                docker { 
+                    image 'hashicorp/terraform:latest' 
+                    args '--entrypoint=""'
+                }
+            }
+            steps {
+                dir('devops-infra/terraform-local') {
+                    sh 'terraform init'
+                    sh 'terraform apply -auto-approve'
+                }
+            }
+        }
+        
+        stage('Verify Deployment') {
+            agent {
+                docker { 
+                    image 'bitnami/kubectl:latest' 
+                    args '--entrypoint=""'
+                }
+            }
+            steps {
+                sh 'kubectl get pods -n pizza-helper'
+                sh 'kubectl get services -n pizza-helper'
+            }
+        }
+    }
+}
