@@ -8,7 +8,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5433:5432"
 
   backend:
     image: orbitroll/pizza-helper-backend:latest
@@ -27,7 +27,7 @@ services:
     image: orbitroll/pizza-helper-frontend:latest
     build: ./frontend
     ports:
-      - "3069:3000"
+      - "3070:80"
     volumes:
       - ./frontend:/app
       - /app/node_modules

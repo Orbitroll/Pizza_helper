@@ -63,13 +63,13 @@ def ask_bot():
         elif 'water' in user_message_lower or 'hydration' in user_message_lower:
             response_text = "Hydration is the ratio of water to flour. 60% is standard and easy to work with. Higher hydration (70%+) makes for a airier crust but is stickier to handle."
         
-    elif 'temp' in user_message or 'heat' in user_message:
-        response_text = "Pizza loves heat! If you're using a home oven, crank it to the max (usually 250°C/500°F) and use a pizza stone or steel if you have one."
-        
-    elif 'time' in user_message or 'proof' in user_message:
-        response_text = "Longer fermentation usually means better flavor. A 24-hour cold ferment in the fridge develops amazing complexity."
+        elif 'temp' in user_message_lower or 'heat' in user_message_lower:
+            response_text = "Pizza loves heat! If you're using a home oven, crank it to the max (usually 250°C/500°F) and use a pizza stone or steel if you have one."
+            
+        elif 'time' in user_message_lower or 'proof' in user_message_lower:
+            response_text = "Longer fermentation usually means better flavor. A 24-hour cold ferment in the fridge develops amazing complexity."
 
-    elif 'sticky' in user_message:
-        response_text = "If your dough is too sticky, try wetting your hands instead of adding more flour. Adding too much flour can make the crust tough."
+        elif 'sticky' in user_message_lower:
+            response_text = "If your dough is too sticky, try wetting your hands instead of adding more flour. Adding too much flour can make the crust tough."
 
     return jsonify({'response': response_text})
