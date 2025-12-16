@@ -14,18 +14,27 @@ pipeline {
         
         stage('Deploy to Local K8s') {
             steps {
-                sh 'terraform -version'
-                dir('devops-infra/terraform-local') {
-                    sh 'terraform init'
-                    sh 'terraform apply -auto-approve'
+                script {
+                    sh 'cp $KUBECONFIG ${WORKSPACE}/kubeconfig_fixed'
+                    sh "sed -i 's|server: https://.*|server: https://host.docker.internal:6443|g' ${WORKSPACE}/kubeconfig_fixed"
+                    sh 'chmod 600 ${WORKSPACE}/kubeconfig_fixed'
+                }
+                withEnv(["KUBECONFIG=${env.WORKSPACE}/kubeconfig_fixed"]) {
+                    sh 'terraform -version'
+                    dir('devops-infra/terraform-local') {
+                        sh 'terraform init'
+                        sh 'terraform apply -auto-approve'
+                    }
                 }
             }
         }
         
         stage('Verify Deployment') {
             steps {
-                sh 'kubectl get pods -n pizza-helper'
-                sh 'kubectl get services -n pizza-helper'
+                withEnv(["KUBECONFIG=${env.WORKSPACE}/kubeconfig_fixed"]) {
+                    sh 'kubectl get pods -n pizza-helper'
+                    sh 'kubectl get services -n pizza-helper'
+                }
             }
         }
     }
