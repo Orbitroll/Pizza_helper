@@ -8,6 +8,8 @@ terraform {
 }
 
 provider "kubernetes" {
+  host = "https://host.docker.internal:6443"
+  insecure = true
 }
 
 resource "kubernetes_namespace" "pizza_helper" {

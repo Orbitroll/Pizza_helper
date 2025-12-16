@@ -14,25 +14,18 @@ pipeline {
         
         stage('Deploy to Local K8s') {
             steps {
-                script {
-                    docker.image('hashicorp/terraform:latest').inside('--entrypoint=""') {
-                        dir('devops-infra/terraform-local') {
-                            sh 'terraform init'
-                            sh 'terraform apply -auto-approve'
-                        }
-                    }
+                sh 'terraform -version'
+                dir('devops-infra/terraform-local') {
+                    sh 'terraform init'
+                    sh 'terraform apply -auto-approve'
                 }
             }
         }
         
         stage('Verify Deployment') {
             steps {
-                script {
-                    docker.image('bitnami/kubectl:latest').inside('--entrypoint=""') {
-                        sh 'kubectl get pods -n pizza-helper'
-                        sh 'kubectl get services -n pizza-helper'
-                    }
-                }
+                sh 'kubectl get pods -n pizza-helper'
+                sh 'kubectl get services -n pizza-helper'
             }
         }
     }
