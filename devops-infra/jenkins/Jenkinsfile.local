@@ -13,30 +13,26 @@ pipeline {
         }
         
         stage('Deploy to Local K8s') {
-            agent {
-                docker { 
-                    image 'hashicorp/terraform:latest' 
-                    args '--entrypoint=""'
-                }
-            }
             steps {
-                dir('devops-infra/terraform-local') {
-                    sh 'terraform init'
-                    sh 'terraform apply -auto-approve'
+                script {
+                    docker.image('hashicorp/terraform:latest').inside('--entrypoint=""') {
+                        dir('devops-infra/terraform-local') {
+                            sh 'terraform init'
+                            sh 'terraform apply -auto-approve'
+                        }
+                    }
                 }
             }
         }
         
         stage('Verify Deployment') {
-            agent {
-                docker { 
-                    image 'bitnami/kubectl:latest' 
-                    args '--entrypoint=""'
-                }
-            }
             steps {
-                sh 'kubectl get pods -n pizza-helper'
-                sh 'kubectl get services -n pizza-helper'
+                script {
+                    docker.image('bitnami/kubectl:latest').inside('--entrypoint=""') {
+                        sh 'kubectl get pods -n pizza-helper'
+                        sh 'kubectl get services -n pizza-helper'
+                    }
+                }
             }
         }
     }
