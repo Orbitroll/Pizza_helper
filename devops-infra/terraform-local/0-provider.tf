@@ -7,8 +7,13 @@ terraform {
   }
 }
 
+variable "kube_config" {
+  type    = string
+  default = "~/.kube/config"
+}
+
 provider "kubernetes" {
-  insecure = true
+  config_path = var.kube_config
 }
 
 resource "kubernetes_namespace_v1" "pizza_helper" {

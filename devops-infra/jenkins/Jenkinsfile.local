@@ -26,15 +26,16 @@ pipeline {
                         fi
                         kubectl config set-cluster $CLUSTER_NAME --server=https://host.docker.internal:6443
                         kubectl config set-cluster $CLUSTER_NAME --insecure-skip-tls-verify=true
+                        kubectl config unset clusters.$CLUSTER_NAME.certificate-authority-data
                         echo "Updated server configuration:"
-                        kubectl config view --minify | grep server
+                        kubectl config view --minify
                     '''
                 }
                 withEnv(["KUBECONFIG=${env.WORKSPACE}/kubeconfig_fixed"]) {
                     sh 'terraform -version'
                     dir('devops-infra/terraform-local') {
                         sh 'terraform init'
-                        sh 'terraform apply -auto-approve'
+                        sh "terraform apply -auto-approve -var='kube_config=${env.WORKSPACE}/kubeconfig_fixed'"
                     }
                 }
             }
