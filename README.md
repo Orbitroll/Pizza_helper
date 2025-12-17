@@ -1,8 +1,6 @@
-# shlomis Project
-
 # Pizza Helper Project
 
-This project is a full-stack web application with a complete DevOps infrastructure including Kubernetes, Terraform, and Jenkins.
+This project is a full-stack web application with a complete DevOps infrastructure including Kubernetes, Terraform, and Jenkins. It supports both AWS Cloud deployment and a fully local development environment using Docker Desktop.
 
 ## Project Structure
 
@@ -12,41 +10,71 @@ pizza-helper/
 │   ├── frontend/           # React/Vite Frontend
 │   └── backend/            # Python/Flask Backend
 ├── devops-infra/           # DevOps Infrastructure
-│   ├── jenkins/            # Jenkins CI/CD Pipeline
-│   ├── kubernetes/         # Kubernetes Manifests (Deployment, Service, Ingress)
-│   └── terraform/          # Infrastructure as Code (AWS EKS, VPC, ECR)
+│   ├── jenkins/            # Jenkins CI/CD Pipeline (Local & Cloud)
+│   ├── kubernetes/         # Kubernetes Manifests
+│   ├── terraform/          # Terraform for AWS
+│   └── terraform-local/    # Terraform for Local Kubernetes
+├── .env.example            # Example Environment Variables
 └── README.md               # This file
 ```
 
+## Environment Configuration
+
+Create a `.env` file in the root directory based on `.env.example`:
+
+```bash
+cp .env.example .env
+```
+
+**Required Variables:**
+*   `POSTGRES_USER`: Database username
+*   `POSTGRES_PASSWORD`: Database password
+*   `POSTGRES_DB`: Database name
+*   `DATABASE_URL`: Connection string for the backend
+*   `FLASK_ENV`: Backend environment (development/production)
+
+## Local Development Environment
+
+We use a local Kubernetes setup with Jenkins and Terraform to simulate a real DevOps workflow.
+
+### 1. Prerequisites
+*   Docker Desktop (with Kubernetes enabled)
+*   Git
+
+### 2. Start Jenkins
+Run the custom Jenkins container which includes Terraform and Kubectl:
+
+```bash
+cd devops-infra/jenkins
+docker build -t my-jenkins-tools .
+docker run -d --name jenkins-local -p 3711:8080 -p 50000:50000 -v jenkins_home:/var/jenkins_home -v //var/run/docker.sock:/var/run/docker.sock my-jenkins-tools
+```
+Access Jenkins at: `http://localhost:3711`
+
+### 3. Jenkins Pipelines (Environments)
+We have 3 environments managed by separate Jenkins pipelines:
+
+*   **DEV** (`Jenkinsfile.dev`):
+    *   Deploys to `pizza-helper-dev` namespace.
+    *   Frontend: `http://localhost:30080`
+*   **TEST** (`Jenkinsfile.test`):
+    *   Checks DEV health -> Deploys to `pizza-helper-test` namespace.
+    *   Frontend: `http://localhost:30081`
+*   **PROD** (`Jenkinsfile.prod`):
+    *   Checks TEST health -> Deploys to `pizza-helper-prod` namespace.
+    *   Frontend: `http://localhost:30082`
+
+### 4. Cleanup
+To destroy all environments and clean up resources, use the **Destroy Pipeline** (`Jenkinsfile.destroy`).
+
 ## Infrastructure (Terraform)
 
-The infrastructure is managed using Terraform and includes:
-- **VPC**: Custom networking.
-- **EKS Cluster**: Managed Kubernetes.
-- **ECR**: Container registries.
-- **State Management**: S3 Backend with Locking.
+The infrastructure is managed using Terraform.
+*   **Local**: `devops-infra/terraform-local/` (Uses Kubernetes Provider)
+*   **AWS**: `devops-infra/terraform/` (Uses AWS Provider - EKS, VPC, ECR)
 
-See [devops-infra/terraform/README.md](devops-infra/terraform/README.md) for setup instructions.
+## Application
 
-## CI/CD (Jenkins)
-
-The pipeline is defined in `devops-infra/jenkins/Jenkinsfile` and handles:
-1.  **Test**: Runs unit tests for Frontend and Backend.
-2.  **Build**: Builds Docker images.
-3.  **Push**: Pushes images to Docker Hub (or ECR).
-4.  **Deploy**: Deploys to EKS using `kubectl`.
-
-## Getting Started
-
-1.  **Infrastructure**:
-    Navigate to `devops-infra/terraform` and follow the README to provision AWS resources.
-
-2.  **Application**:
-    The application consists of a React frontend and a Flask backend.
-    *   Frontend runs on port 80 (via Nginx).
-    *   Backend runs on port 5000 (via Gunicorn).
-
-## Development
-
-*   **Frontend**: `cd app/frontend && npm install && npm run dev`
-*   **Backend**: `cd app/backend && pip install -r requirements.txt && python app.py`
+The application consists of a React frontend and a Flask backend.
+*   **Frontend**: Runs on port 80 (via Nginx) inside the cluster.
+*   **Backend**: Runs on port 5000 (via Gunicorn) inside the cluster.
