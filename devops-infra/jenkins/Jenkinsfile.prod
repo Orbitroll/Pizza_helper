@@ -1,0 +1,66 @@
+pipeline {
+    agent any
+    
+    environment {
+        KUBECONFIG = credentials('kubeconfig-local')
+        NAMESPACE = 'pizza-helper-prod'
+        NODE_PORT = '30082'
+        TEST_URL = 'http://host.docker.internal:30081'
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'master', url: 'https://github.com/Orbitroll/Pizza_helper.git'
+            }
+        }
+
+        stage('Health Check TEST') {
+            steps {
+                script {
+                    echo "Checking health of TEST environment at ${TEST_URL}..."
+                    retry(5) {
+                        sleep 10
+                        sh "curl -f ${TEST_URL} || exit 1"
+                    }
+                    echo "TEST environment is healthy."
+                }
+            }
+        }
+        
+        stage('Deploy to PROD') {
+            steps {
+                script {
+                    sh 'cp $KUBECONFIG ${WORKSPACE}/kubeconfig_fixed'
+                    sh 'chmod 600 ${WORKSPACE}/kubeconfig_fixed'
+                    sh '''
+                        export KUBECONFIG=${WORKSPACE}/kubeconfig_fixed
+                        CLUSTER_NAME=$(kubectl config view --minify -o jsonpath='{.clusters[0].name}')
+                        if [ -z "$CLUSTER_NAME" ]; then
+                            echo "Error: Could not find cluster name in kubeconfig"
+                            exit 1
+                        fi
+                        kubectl config set-cluster $CLUSTER_NAME --server=https://host.docker.internal:6443
+                        kubectl config set-cluster $CLUSTER_NAME --insecure-skip-tls-verify=true
+                        kubectl config unset clusters.$CLUSTER_NAME.certificate-authority-data
+                    '''
+                }
+                withEnv(["KUBECONFIG=${env.WORKSPACE}/kubeconfig_fixed"]) {
+                    dir('devops-infra/terraform-local') {
+                        sh 'terraform init'
+                        sh "terraform apply -auto-approve -var='kube_config=${env.WORKSPACE}/kubeconfig_fixed' -var='namespace=${NAMESPACE}' -var='node_port=${NODE_PORT}'"
+                    }
+                }
+            }
+        }
+        
+        stage('Verify Deployment') {
+            steps {
+                withEnv(["KUBECONFIG=${env.WORKSPACE}/kubeconfig_fixed"]) {
+                    sh "kubectl get pods -n ${NAMESPACE}"
+                    sh "kubectl get services -n ${NAMESPACE}"
+                }
+            }
+        }
+    }
+}

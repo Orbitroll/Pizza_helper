@@ -18,6 +18,6 @@ provider "kubernetes" {
 
 resource "kubernetes_namespace_v1" "pizza_helper" {
   metadata {
-    name = "pizza-helper"
+    name = var.namespace
   }
 }
