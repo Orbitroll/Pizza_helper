@@ -21,7 +21,7 @@ resource "kubernetes_deployment_v1" "frontend" {
 
       spec {
         container {
-          image = "orbitroll/pizza-helper-frontend:latest"
+          image = "orbitroll/pizza-helper-frontend:${var.image_tag}"
           name  = "frontend"
           image_pull_policy = "Always"
 
