@@ -49,9 +49,35 @@ histogram_quantile(0.95, sum(rate(flask_http_request_duration_seconds_bucket[5m]
 histogram_quantile(0.99, sum(rate(flask_http_request_duration_seconds_bucket[5m])) by (le))
 ```
 
+## Frontend (Nginx) & Database (Postgres)
+
+Since these are not instrumented with native Prometheus exporters in this setup, we monitor them via their **Pod metrics**.
+
+### Frontend Pods
+**CPU Usage**
+```promql
+sum(rate(container_cpu_usage_seconds_total{namespace="pizza-helper", pod=~"pizza-helper-frontend.*"}[5m]))
+```
+
+**Memory Usage**
+```promql
+sum(container_memory_usage_bytes{namespace="pizza-helper", pod=~"pizza-helper-frontend.*"})
+```
+
+### Database Pods
+**CPU Usage**
+```promql
+sum(rate(container_cpu_usage_seconds_total{namespace="pizza-helper", pod=~"postgres.*"}[5m]))
+```
+
+**Memory Usage**
+```promql
+sum(container_memory_usage_bytes{namespace="pizza-helper", pod=~"postgres.*"})
+```
+
 ---
 
-## Kubernetes Infrastructure (Namespace: pizza-helper)
+## Kubernetes Infrastructure (All Pods)
 
 ### CPU Usage
 **CPU Usage by Pod (Cores)**
