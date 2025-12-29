@@ -49,6 +49,38 @@ histogram_quantile(0.95, sum(rate(flask_http_request_duration_seconds_bucket[5m]
 histogram_quantile(0.99, sum(rate(flask_http_request_duration_seconds_bucket[5m])) by (le))
 ```
 
+### Gemini API
+**Total Gemini Requests per Second**
+```promql
+sum(rate(gemini_api_requests_total[5m]))
+```
+
+**Gemini Requests by Status**
+```promql
+sum(rate(gemini_api_requests_total[5m])) by (status)
+```
+
+**Gemini API Average Latency**
+```promql
+rate(gemini_api_latency_seconds_sum[5m]) / rate(gemini_api_latency_seconds_count[5m])
+```
+
+### Weather API
+**Total Weather API Requests per Second**
+```promql
+sum(rate(weather_api_requests_total[5m])) by (api)
+```
+
+**Weather API Requests by Status**
+```promql
+sum(rate(weather_api_requests_total[5m])) by (api, status)
+```
+
+**Weather API Average Latency**
+```promql
+rate(weather_api_latency_seconds_sum[5m]) / rate(weather_api_latency_seconds_count[5m])
+```
+
 ## Frontend (Nginx) & Database (Postgres)
 
 Since these are not instrumented with native Prometheus exporters in this setup, we monitor them via their **Pod metrics**.

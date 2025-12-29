@@ -1,8 +1,14 @@
 from flask import Blueprint, request, jsonify
 import os
+import time
 import google.generativeai as genai
+from prometheus_client import Counter, Histogram
 
 chat_bp = Blueprint('chat', __name__)
+
+# Prometheus Metrics
+GEMINI_REQUESTS = Counter('gemini_api_requests_total', 'Total requests to Gemini API', ['status'])
+GEMINI_LATENCY = Histogram('gemini_api_latency_seconds', 'Latency of Gemini API requests')
 
 # Configure Gemini API
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
@@ -18,6 +24,7 @@ def ask_bot():
     # 1. Try using Google Gemini (Free Tier) if Key is present
     if GEMINI_API_KEY:
         try:
+            start_time = time.time()
             # Use gemini-flash-latest as it is available and likely has quota
             model = genai.GenerativeModel('gemini-flash-latest')
             
@@ -26,9 +33,15 @@ def ask_bot():
             full_prompt = f"{system_prompt}\n\nUser: {user_message}\nChef:"
             
             response = model.generate_content(full_prompt)
+            
+            # Record metrics
+            GEMINI_LATENCY.observe(time.time() - start_time)
+            GEMINI_REQUESTS.labels(status='success').inc()
+            
             return jsonify({'response': response.text})
         except Exception as e:
             print(f"ERROR: Gemini API Error: {e}", flush=True)
+            GEMINI_REQUESTS.labels(status='error').inc()
             # Fallback to local logic if API fails
             pass
 

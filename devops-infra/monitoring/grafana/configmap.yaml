@@ -14,22 +14,4 @@ data:
       url: http://prometheus-service.pizza-helper.svc.cluster.local:9090
       version: 1
       editable: true
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: grafana-dashboards-provider
-  namespace: pizza-helper
-data:
-  dashboards.yaml: |-
-    apiVersion: 1
-    providers:
-    - name: 'default'
-      orgId: 1
-      folder: ''
-      type: file
-      disableDeletion: true
-      editable: true
-      allowUiUpdates: true
-      options:
-        path: /var/lib/grafana/dashboards
+
