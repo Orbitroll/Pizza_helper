@@ -21,13 +21,10 @@ spec:
         volumeMounts:
           - name: grafana-datasources
             mountPath: /etc/grafana/provisioning/datasources
-            readOnly: false
           - name: grafana-dashboards-provider
             mountPath: /etc/grafana/provisioning/dashboards
-            readOnly: false
           - name: grafana-dashboards
             mountPath: /var/lib/grafana/dashboards
-            readOnly: false
       volumes:
         - name: grafana-datasources
           configMap:

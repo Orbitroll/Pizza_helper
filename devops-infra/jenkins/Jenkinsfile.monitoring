@@ -55,6 +55,8 @@ pipeline {
                 withEnv(["KUBECONFIG=${env.WORKSPACE}/kubeconfig_fixed"]) {
                     script {
                         echo "Deploying Prometheus and Grafana..."
+                        sh 'kubectl create namespace pizza-helper --dry-run=client -o yaml | kubectl apply -f -'
+                        sh 'kubectl create configmap grafana-dashboards --from-file=devops-infra/monitoring/grafana/dashboards/ -n pizza-helper --dry-run=client -o yaml | kubectl apply -f -'
                         sh 'kubectl apply -f devops-infra/monitoring/prometheus/'
                         sh 'kubectl apply -f devops-infra/monitoring/grafana/'
                     }
