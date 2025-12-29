@@ -2,10 +2,23 @@ FROM jenkins/jenkins:lts
 
 USER root
 
-# Install Docker CLI
+# Install basic dependencies (Python, Node.js, etc.)
 RUN apt-get update && \
-    apt-get install -y ca-certificates curl gnupg && \
-    install -m 0755 -d /etc/apt/keyrings && \
+    apt-get install -y \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release \
+    wget \
+    python3 \
+    python3-pip \
+    python3-venv \
+    nodejs \
+    npm \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Docker CLI
+RUN install -m 0755 -d /etc/apt/keyrings && \
     curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
     chmod a+r /etc/apt/keyrings/docker.gpg && \
     echo \
@@ -13,15 +26,15 @@ RUN apt-get update && \
       "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
       tee /etc/apt/sources.list.d/docker.list > /dev/null && \
     apt-get update && \
-    apt-get install -y docker-ce-cli
+    apt-get install -y docker-ce-cli && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install kubectl
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
     install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
 # Install Terraform
-RUN apt-get update && apt-get install -y gnupg lsb-release wget && \
-    wget -O- https://apt.releases.hashicorp.com/gpg | \
+RUN wget -O- https://apt.releases.hashicorp.com/gpg | \
     gpg --dearmor | \
     tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null && \
     gpg --no-default-keyring \
@@ -31,6 +44,7 @@ RUN apt-get update && apt-get install -y gnupg lsb-release wget && \
     https://apt.releases.hashicorp.com $(lsb_release -cs) main" | \
     tee /etc/apt/sources.list.d/hashicorp.list && \
     apt-get update && \
-    apt-get install -y terraform
+    apt-get install -y terraform && \
+    rm -rf /var/lib/apt/lists/*
 
 USER jenkins
