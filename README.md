@@ -78,6 +78,7 @@ The project includes a monitoring stack with Prometheus and Grafana.
 *   **Grafana**: Visualizes metrics with pre-configured dashboards.
     *   Access Grafana at: `http://localhost:30030` (NodePort)
     *   Default credentials: `admin` / `admin`
+*   **Queries**: Useful PromQL queries can be found in [QUERIES.md](devops-infra/monitoring/prometheus/QUERIES.md).
 
 ## Application
 

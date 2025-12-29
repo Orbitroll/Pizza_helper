@@ -19,7 +19,7 @@ data:
       - job_name: 'pizza-helper-backend'
         scrape_interval: 5s
         static_configs:
-          - targets: ['pizza-helper-backend:5000']
+          - targets: ['backend:5000']
 
       - job_name: 'kubernetes-apiservers'
         kubernetes_sd_configs:
