@@ -1,0 +1,105 @@
+pipeline {
+    agent any
+    
+    environment {
+        // Credentials
+        DOCKER_CREDS = credentials('SHLOMISHSH')
+        KUBECONFIG = credentials('kubeconfig-local')
+        
+        // Variables
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+        BACKEND_IMAGE = "orbitroll/pizza-helper-backend"
+        FRONTEND_IMAGE = "orbitroll/pizza-helper-frontend"
+    }
+    
+    stages {
+        stage('Check Commit Message') {
+            steps {
+                script {
+                    // Check if the commit message contains 'deploy'
+                    def commitMsg = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
+                    echo "Commit message: ${commitMsg}"
+                    if (!commitMsg.contains('deploy')) {
+                        echo "Commit message does not contain 'deploy'. Skipping pipeline."
+                        currentBuild.result = 'ABORTED'
+                        error("Skipping pipeline as commit message does not contain 'deploy'")
+                    }
+                }
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                git branch: 'master', url: 'https://github.com/Orbitroll/Pizza_helper.git'
+            }
+        }
+        
+        stage('Test Backend') {
+            steps {
+                dir('app/backend') {
+                    sh 'python3 -m venv venv'
+                    sh '. venv/bin/activate && pip install -r requirements.txt && pytest'
+                }
+            }
+        }
+        
+        stage('Test Frontend') {
+            steps {
+                dir('app/frontend') {
+                    sh 'npm install'
+                    sh 'npm test'
+                }
+            }
+        }
+        
+        stage('Build & Push Images') {
+            steps {
+                script {
+                    sh "echo $DOCKER_CREDS_PSW | docker login -u $DOCKER_CREDS_USR --password-stdin"
+                    
+                    // Backend
+                    dir('app/backend') {
+                        sh "docker build -t ${BACKEND_IMAGE}:${IMAGE_TAG} ."
+                        sh "docker push ${BACKEND_IMAGE}:${IMAGE_TAG}"
+                    }
+                    
+                    // Frontend
+                    // Note: Frontend build context needs to be handled carefully. 
+                    // Assuming Dockerfile is in app/frontend and context is app/frontend
+                    dir('app/frontend') {
+                         sh "docker build -t ${FRONTEND_IMAGE}:${IMAGE_TAG} ."
+                         sh "docker push ${FRONTEND_IMAGE}:${IMAGE_TAG}"
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy to K8s') {
+            steps {
+                script {
+                    // Setup Kubeconfig
+                    sh 'cp $KUBECONFIG ${WORKSPACE}/kubeconfig_fixed'
+                    sh 'chmod 600 ${WORKSPACE}/kubeconfig_fixed'
+                    sh '''
+                        export KUBECONFIG=${WORKSPACE}/kubeconfig_fixed
+                        CLUSTER_NAME=$(kubectl config view --minify -o jsonpath='{.clusters[0].name}')
+                        if [ -z "$CLUSTER_NAME" ]; then
+                            echo "Error: Could not find cluster name in kubeconfig"
+                            exit 1
+                        fi
+                        kubectl config set-cluster $CLUSTER_NAME --server=https://host.docker.internal:6443
+                        kubectl config set-cluster $CLUSTER_NAME --insecure-skip-tls-verify=true
+                        kubectl config unset clusters.$CLUSTER_NAME.certificate-authority-data
+                    '''
+                }
+                
+                withEnv(["KUBECONFIG=${env.WORKSPACE}/kubeconfig_fixed"]) {
+                    dir('devops-infra/terraform-local') {
+                        sh 'terraform init'
+                        sh "terraform apply -auto-approve -var='kube_config=${env.WORKSPACE}/kubeconfig_fixed' -var='image_tag=${IMAGE_TAG}'"
+                    }
+                }
+            }
+        }
+    }
+}
