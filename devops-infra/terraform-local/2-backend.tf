@@ -33,6 +33,11 @@ resource "kubernetes_deployment_v1" "backend" {
             name  = "DATABASE_URL"
             value = "postgresql://pizza_user:pizza_password@db:5432/pizza_db"
           }
+
+          env {
+            name  = "GEMINI_API_KEY"
+            value = var.gemini_api_key
+          }
           
           liveness_probe {
             http_get {

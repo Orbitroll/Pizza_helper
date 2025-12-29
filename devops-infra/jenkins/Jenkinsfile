@@ -1,0 +1,126 @@
+pipeline {
+    agent any
+    
+    parameters {
+        string(name: 'ENVIRONMENT', defaultValue: 'dev', description: 'Target environment (dev/prod)')
+    }
+    
+    environment {
+        DOCKER_HUB_USER = 'orbitroll'
+        GIT_SHA = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+        IMAGE_TAG = "${env.BUILD_NUMBER}-${GIT_SHA}"
+        REGISTRY_CREDENTIALS_ID = 'docker-hub-credentials'
+        KUBECONFIG_CREDENTIALS_ID = 'kubeconfig-credentials'
+        CLUSTER_NAME = "pizza-helper-cluster-${params.ENVIRONMENT}"
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Run Tests') {
+            parallel {
+                stage('Frontend Tests') {
+                    steps {
+                        dir('app/frontend') {
+                            sh 'npm install'
+                            sh 'npm test'
+                        }
+                    }
+                }
+                stage('Backend Tests') {
+                    steps {
+                        dir('app/backend') {
+                            sh 'pip install -r requirements.txt'
+                            sh 'pytest'
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Build Docker Images') {
+            parallel {
+                stage('Build Frontend') {
+                    steps {
+                        dir('app/frontend') {
+                            sh "docker build -t ${DOCKER_HUB_USER}/pizza-helper-frontend:${IMAGE_TAG} ."
+                            sh "docker tag ${DOCKER_HUB_USER}/pizza-helper-frontend:${IMAGE_TAG} ${DOCKER_HUB_USER}/pizza-helper-frontend:latest"
+                        }
+                    }
+                }
+                stage('Build Backend') {
+                    steps {
+                        dir('app/backend') {
+                            sh "docker build -t ${DOCKER_HUB_USER}/pizza-helper-backend:${IMAGE_TAG} ."
+                            sh "docker tag ${DOCKER_HUB_USER}/pizza-helper-backend:${IMAGE_TAG} ${DOCKER_HUB_USER}/pizza-helper-backend:latest"
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Push Docker Images') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: REGISTRY_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
+                        
+                        sh "docker push ${DOCKER_HUB_USER}/pizza-helper-frontend:${IMAGE_TAG}"
+                        sh "docker push ${DOCKER_HUB_USER}/pizza-helper-frontend:latest"
+                        
+                        sh "docker push ${DOCKER_HUB_USER}/pizza-helper-backend:${IMAGE_TAG}"
+                        sh "docker push ${DOCKER_HUB_USER}/pizza-helper-backend:latest"
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    withCredentials([
+                        usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY'),
+                        string(credentialsId: 'aws-region', variable: 'AWS_DEFAULT_REGION')
+                    ]) {
+                        sh "aws eks update-kubeconfig --name ${CLUSTER_NAME} --region ${AWS_DEFAULT_REGION}"
+                        
+                        sh "kubectl apply -f devops-infra/kubernetes/namespace.yaml"
+                        sh "kubectl apply -R -f pizza-deploynet/ -n pizza-helper"
+                        
+                        sh "kubectl set image deployment/pizza-helper-frontend frontend=${DOCKER_HUB_USER}/pizza-helper-frontend:${IMAGE_TAG} -n pizza-helper"
+                        sh "kubectl set image deployment/pizza-helper-backend backend=${DOCKER_HUB_USER}/pizza-helper-backend:${IMAGE_TAG} -n pizza-helper"
+                        
+                        sh "kubectl rollout status deployment/pizza-helper-frontend -n pizza-helper"
+                        sh "kubectl rollout status deployment/pizza-helper-backend -n pizza-helper"
+                        
+                        sh "echo 'Verifying Backend Health...'"
+                        sh "kubectl run curl-test --image=curlimages/curl --restart=Never --rm -i -- curl -sS http://backend.pizza-helper.svc.cluster.local:5000/health"
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            cleanWs()
+        }
+        failure {
+            script {
+                echo "Deployment failed! Initiating rollback..."
+                withCredentials([
+                    usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY'),
+                    string(credentialsId: 'aws-region', variable: 'AWS_DEFAULT_REGION')
+                ]) {
+                    sh "aws eks update-kubeconfig --name pizza-helper-cluster --region ${AWS_DEFAULT_REGION}"
+                    sh "kubectl rollout undo deployment/pizza-helper-frontend -n pizza-helper"
+                    sh "kubectl rollout undo deployment/pizza-helper-backend -n pizza-helper"
+                }
+            }
+        }
+    }
+}

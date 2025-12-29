@@ -128,24 +128,4 @@ sum(rate(container_cpu_usage_seconds_total{namespace="pizza-helper"}[5m]))
 sum(container_memory_usage_bytes{namespace="pizza-helper"}) by (pod)
 ```
 
-### Network
-**Network Receive Rate (Bytes/sec)**
-```promql
-sum(rate(container_network_receive_bytes_total{namespace="pizza-helper"}[5m])) by (pod)
-```
-
-**Network Transmit Rate (Bytes/sec)**
-```promql
-sum(rate(container_network_transmit_bytes_total{namespace="pizza-helper"}[5m])) by (pod)
-```
-
-### Health & Availability
-**Pod Restarts (Last 1 hour)**
-```promql
-sum(changes(kube_pod_container_status_restarts_total{namespace="pizza-helper"}[1h])) by (pod)
-```
-
-**Unhealthy Pods (Not Ready)**
-```promql
-count(kube_pod_status_ready{condition="true", namespace="pizza-helper"} == 0)
-```
+<!-- Network and Health metrics require additional configuration (CNI support / kube-state-metrics) and are not available in this setup -->
