@@ -82,18 +82,18 @@ sum(container_memory_usage_bytes{namespace="pizza-helper", pod=~"postgres.*"})
 ### CPU Usage
 **CPU Usage by Pod (Cores)**
 ```promql
-sum(rate(container_cpu_usage_seconds_total{namespace="pizza-helper", image!=""}[5m])) by (pod)
+sum(rate(container_cpu_usage_seconds_total{namespace="pizza-helper"}[5m])) by (pod)
 ```
 
 **Total CPU Usage in Namespace**
 ```promql
-sum(rate(container_cpu_usage_seconds_total{namespace="pizza-helper", image!=""}[5m]))
+sum(rate(container_cpu_usage_seconds_total{namespace="pizza-helper"}[5m]))
 ```
 
 ### Memory Usage
 **Memory Usage by Pod (Bytes)**
 ```promql
-sum(container_memory_usage_bytes{namespace="pizza-helper", image!=""}) by (pod)
+sum(container_memory_usage_bytes{namespace="pizza-helper"}) by (pod)
 ```
 
 ### Network
