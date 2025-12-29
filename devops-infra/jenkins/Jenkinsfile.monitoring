@@ -1,0 +1,65 @@
+pipeline {
+    agent any
+
+    triggers {
+        githubPush()
+    }
+    
+    environment {
+        KUBECONFIG = credentials('kubeconfig-local')
+    }
+    
+    stages {
+        stage('Check Commit Message') {
+            steps {
+                script {
+                    def commitMsg = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
+                    echo "Commit message: ${commitMsg}"
+                    if (!commitMsg.contains('monitor-deploy')) {
+                        echo "Commit message does not contain 'monitor-deploy'. Skipping pipeline."
+                        currentBuild.result = 'ABORTED'
+                        error("Skipping pipeline as commit message does not contain 'monitor-deploy'")
+                    }
+                }
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                git branch: 'master', url: 'https://github.com/Orbitroll/Pizza_helper.git'
+            }
+        }
+        
+        stage('Setup Kubeconfig') {
+            steps {
+                script {
+                    sh 'cp $KUBECONFIG ${WORKSPACE}/kubeconfig_fixed'
+                    sh 'chmod 600 ${WORKSPACE}/kubeconfig_fixed'
+                    sh '''
+                        export KUBECONFIG=${WORKSPACE}/kubeconfig_fixed
+                        CLUSTER_NAME=$(kubectl config view --minify -o jsonpath='{.clusters[0].name}')
+                        if [ -z "$CLUSTER_NAME" ]; then
+                            echo "Error: Could not find cluster name in kubeconfig"
+                            exit 1
+                        fi
+                        kubectl config set-cluster $CLUSTER_NAME --server=https://host.docker.internal:6443
+                        kubectl config set-cluster $CLUSTER_NAME --insecure-skip-tls-verify=true
+                        kubectl config unset clusters.$CLUSTER_NAME.certificate-authority-data
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy Monitoring') {
+            steps {
+                withEnv(["KUBECONFIG=${env.WORKSPACE}/kubeconfig_fixed"]) {
+                    script {
+                        echo "Deploying Prometheus and Grafana..."
+                        sh 'kubectl apply -f devops-infra/monitoring/prometheus/'
+                        sh 'kubectl apply -f devops-infra/monitoring/grafana/'
+                    }
+                }
+            }
+        }
+    }
+}

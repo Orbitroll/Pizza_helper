@@ -59,6 +59,9 @@ We have a unified CI/CD pipeline and a cleanup pipeline:
     *   Deploys to Local Kubernetes using Terraform.
 *   **Destroy Pipeline** (`Jenkinsfile.destroy`):
     *   Destroys all resources created by Terraform.
+*   **Monitoring Pipeline** (`Jenkinsfile.monitoring`):
+    *   Deploys Prometheus and Grafana to the cluster.
+    *   Run this pipeline once to set up monitoring.
 
 ### 4. Cleanup
 To destroy all environments and clean up resources, use the **Destroy Pipeline** (`Jenkinsfile.destroy`).
@@ -67,6 +70,14 @@ To destroy all environments and clean up resources, use the **Destroy Pipeline**
 
 The infrastructure is managed using Terraform.
 *   **Local**: `devops-infra/terraform-local/` (Uses Kubernetes Provider)
+
+## Monitoring
+
+The project includes a monitoring stack with Prometheus and Grafana.
+*   **Prometheus**: Scrapes metrics from the backend and Kubernetes components.
+*   **Grafana**: Visualizes metrics with pre-configured dashboards.
+    *   Access Grafana at: `http://localhost:30030` (NodePort)
+    *   Default credentials: `admin` / `admin`
 
 ## Application
 
