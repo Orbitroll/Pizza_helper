@@ -1,6 +1,6 @@
 # Pizza Helper Project
 
-This project is a full-stack web application with a complete DevOps infrastructure including Kubernetes, Terraform, and Jenkins. It supports both AWS Cloud deployment and a fully local development environment using Docker Desktop.
+This project is a full-stack web application with a complete DevOps infrastructure including Kubernetes, Terraform, and Jenkins. It supports a fully local development environment using Docker Desktop.
 
 ## Project Structure
 
@@ -10,8 +10,7 @@ pizza-helper/
 │   ├── frontend/           # React/Vite Frontend
 │   └── backend/            # Python/Flask Backend
 ├── devops-infra/           # DevOps Infrastructure
-│   ├── jenkins/            # Jenkins CI/CD Pipeline (Local & Cloud)
-│   ├── terraform/          # Terraform for AWS
+│   ├── jenkins/            # Jenkins CI/CD Pipeline
 │   └── terraform-local/    # Terraform for Local Kubernetes
 ├── .env.example            # Example Environment Variables
 └── README.md               # This file
@@ -68,7 +67,6 @@ To destroy all environments and clean up resources, use the **Destroy Pipeline**
 
 The infrastructure is managed using Terraform.
 *   **Local**: `devops-infra/terraform-local/` (Uses Kubernetes Provider)
-*   **AWS**: `devops-infra/terraform/` (Uses AWS Provider - EKS, VPC, ECR)
 
 ## Application
 
