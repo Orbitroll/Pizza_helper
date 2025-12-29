@@ -21,7 +21,10 @@ spec:
         - name: DATABASE_URL
           value: "postgresql://pizza_user:pizza_password@db:5432/pizza_db"
         - name: GEMINI_API_KEY
-          value: "AIzaSyBVaGLeQ03zVkWo5JiLNBmRx2p5cOKcMM8"
+          valueFrom:
+            secretKeyRef:
+              name: pizza-helper-secrets
+              key: GEMINI_API_KEY
         imagePullPolicy: Always
         livenessProbe:
           httpGet:

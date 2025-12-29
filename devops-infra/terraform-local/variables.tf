@@ -19,5 +19,5 @@ variable "image_tag" {
 variable "gemini_api_key" {
   type        = string
   description = "API Key for Google Gemini"
-  default     = "AIzaSyBVaGLeQ03zVkWo5JiLNBmRx2p5cOKcMM8"
+  sensitive   = true
 }
