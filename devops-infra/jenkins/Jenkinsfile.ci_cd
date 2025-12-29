@@ -8,6 +8,7 @@ pipeline {
     environment {
         DOCKER_CREDS = credentials('SHLOMISHSH')
         KUBECONFIG = credentials('kubeconfig-local')
+        GEMINI_API_KEY = credentials('gemini-api-key')
         
         IMAGE_TAG = "${env.BUILD_NUMBER}"
         BACKEND_IMAGE = "orbitroll/pizza-helper-backend"
@@ -92,7 +93,7 @@ pipeline {
                 withEnv(["KUBECONFIG=${env.WORKSPACE}/kubeconfig_fixed"]) {
                     dir('devops-infra/terraform-local') {
                         sh 'terraform init'
-                        sh "terraform apply -auto-approve -var=\"kube_config=${env.WORKSPACE}/kubeconfig_fixed\" -var=\"image_tag=${IMAGE_TAG}\""
+                        sh "terraform apply -auto-approve -var=\"kube_config=${env.WORKSPACE}/kubeconfig_fixed\" -var=\"image_tag=${IMAGE_TAG}\" -var=\"gemini_api_key=${GEMINI_API_KEY}\""
                     }
                 }
             }
