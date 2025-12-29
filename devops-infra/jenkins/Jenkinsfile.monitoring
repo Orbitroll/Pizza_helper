@@ -59,6 +59,10 @@ pipeline {
                         sh 'kubectl create configmap grafana-dashboards --from-file=devops-infra/monitoring/grafana/dashboards/ -n pizza-helper --dry-run=client -o yaml | kubectl apply -f -'
                         sh 'kubectl apply -f devops-infra/monitoring/prometheus/'
                         sh 'kubectl apply -f devops-infra/monitoring/grafana/'
+                        
+                        echo "Waiting for pods to be ready..."
+                        sh 'kubectl wait --for=condition=ready pod -l app=grafana -n pizza-helper --timeout=60s || kubectl get pods -n pizza-helper'
+                        sh 'kubectl get pods -n pizza-helper'
                     }
                 }
             }
