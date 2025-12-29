@@ -11,7 +11,6 @@ pizza-helper/
 │   └── backend/            # Python/Flask Backend
 ├── devops-infra/           # DevOps Infrastructure
 │   ├── jenkins/            # Jenkins CI/CD Pipeline (Local & Cloud)
-│   ├── kubernetes/         # Kubernetes Manifests
 │   ├── terraform/          # Terraform for AWS
 │   └── terraform-local/    # Terraform for Local Kubernetes
 ├── .env.example            # Example Environment Variables
@@ -51,18 +50,16 @@ docker run -d --name jenkins-local -p 3711:8080 -p 50000:50000 -v jenkins_home:/
 ```
 Access Jenkins at: `http://localhost:3711`
 
-### 3. Jenkins Pipelines (Environments)
-We have 3 environments managed by separate Jenkins pipelines:
+### 3. Jenkins Pipelines
+We have a unified CI/CD pipeline and a cleanup pipeline:
 
-*   **DEV** (`Jenkinsfile.dev`):
-    *   Deploys to `pizza-helper-dev` namespace.
-    *   Frontend: `http://localhost:30080`
-*   **TEST** (`Jenkinsfile.test`):
-    *   Checks DEV health -> Deploys to `pizza-helper-test` namespace.
-    *   Frontend: `http://localhost:30081`
-*   **PROD** (`Jenkinsfile.prod`):
-    *   Checks TEST health -> Deploys to `pizza-helper-prod` namespace.
-    *   Frontend: `http://localhost:30082`
+*   **CI/CD Pipeline** (`Jenkinsfile.ci_cd`):
+    *   Triggered by GitHub push (if commit message contains "deploy").
+    *   Tests Backend & Frontend.
+    *   Builds & Pushes Docker Images.
+    *   Deploys to Local Kubernetes using Terraform.
+*   **Destroy Pipeline** (`Jenkinsfile.destroy`):
+    *   Destroys all resources created by Terraform.
 
 ### 4. Cleanup
 To destroy all environments and clean up resources, use the **Destroy Pipeline** (`Jenkinsfile.destroy`).

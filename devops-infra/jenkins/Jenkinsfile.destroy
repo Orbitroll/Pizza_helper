@@ -32,44 +32,10 @@ pipeline {
             }
         }
 
-        stage('Destroy DEV') {
+        stage('Destroy Environment') {
             steps {
                 withEnv(["KUBECONFIG=${env.WORKSPACE}/kubeconfig_fixed"]) {
                     script {
-                        echo "Destroying DEV environment..."
-                        sh 'kubectl delete namespace pizza-helper-dev --ignore-not-found=true'
-                    }
-                }
-            }
-        }
-
-        stage('Destroy TEST') {
-            steps {
-                withEnv(["KUBECONFIG=${env.WORKSPACE}/kubeconfig_fixed"]) {
-                    script {
-                        echo "Destroying TEST environment..."
-                        sh 'kubectl delete namespace pizza-helper-test --ignore-not-found=true'
-                    }
-                }
-            }
-        }
-
-        stage('Destroy PROD') {
-            steps {
-                withEnv(["KUBECONFIG=${env.WORKSPACE}/kubeconfig_fixed"]) {
-                    script {
-                        echo "Destroying PROD environment..."
-                        sh 'kubectl delete namespace pizza-helper-prod --ignore-not-found=true'
-                    }
-                }
-            }
-        }
-
-        stage('Destroy Legacy Namespace') {
-            steps {
-                withEnv(["KUBECONFIG=${env.WORKSPACE}/kubeconfig_fixed"]) {
-                    script {
-                        echo "Deleting legacy 'pizza-helper' namespace if it exists..."
                         sh 'kubectl delete namespace pizza-helper --ignore-not-found=true'
                     }
                 }
