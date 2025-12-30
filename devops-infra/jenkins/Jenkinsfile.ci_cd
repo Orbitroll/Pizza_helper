@@ -21,10 +21,10 @@ pipeline {
                 script {
                     def commitMsg = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
                     echo "Commit message: ${commitMsg}"
-                    if (!commitMsg.contains('deploy')) {
-                        echo "Commit message does not contain 'deploy'. Skipping pipeline."
+                    if (!commitMsg.contains('deploy') || commitMsg.contains('monitor-deploy')) {
+                        echo "Commit message does not contain 'deploy' or contains 'monitor-deploy'. Skipping pipeline."
                         currentBuild.result = 'ABORTED'
-                        error("Skipping pipeline as commit message does not contain 'deploy'")
+                        error("Skipping pipeline as commit message does not contain 'deploy' or contains 'monitor-deploy'")
                     }
                 }
             }
