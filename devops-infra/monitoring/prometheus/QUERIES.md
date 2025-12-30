@@ -128,4 +128,3 @@ sum(rate(container_cpu_usage_seconds_total{namespace="pizza-helper"}[5m]))
 sum(container_memory_usage_bytes{namespace="pizza-helper"}) by (pod)
 ```
 
-<!-- Network and Health metrics require additional configuration (CNI support / kube-state-metrics) and are not available in this setup -->

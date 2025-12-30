@@ -8,7 +8,6 @@ from prometheus_client import Counter, Histogram
 geo_search = "https://geocoding-api.open-meteo.com/v1/search"
 get_temperature = "https://api.open-meteo.com/v1/forecast"
 
-# Prometheus Metrics
 WEATHER_API_REQUESTS = Counter('weather_api_requests_total', 'Total requests to Weather APIs', ['api', 'status'])
 WEATHER_API_LATENCY = Histogram('weather_api_latency_seconds', 'Latency of Weather API requests', ['api'])
 
@@ -16,7 +15,6 @@ class Weather:
     def get_location_name(self, latitude: float, longitude: float):
         start_time = time.time()
         try:
-            # Use OpenStreetMap Nominatim for reverse geocoding
             headers = {'User-Agent': 'PizzaHelper/1.0'}
             res = requests.get(
                 "https://nominatim.openstreetmap.org/reverse",
@@ -25,14 +23,12 @@ class Weather:
                 timeout=10
             )
             
-            # Record metrics
             WEATHER_API_LATENCY.labels(api='nominatim').observe(time.time() - start_time)
             WEATHER_API_REQUESTS.labels(api='nominatim', status=res.status_code).inc()
 
             if res.status_code == 200:
                 data = res.json()
                 address = data.get("address", {})
-                # Try to find the most relevant name
                 return address.get("city") or address.get("town") or address.get("village") or address.get("suburb") or address.get("county")
         except Exception as e:
             print(f"Error getting location: {e}")
@@ -49,7 +45,6 @@ class Weather:
                 timeout=10
             )
             
-            # Record metrics
             WEATHER_API_LATENCY.labels(api='open-meteo-geo').observe(time.time() - start_time)
             WEATHER_API_REQUESTS.labels(api='open-meteo-geo', status=weather.status_code).inc()
 
@@ -96,7 +91,6 @@ class Weather:
                 timeout=10
             )
             
-            # Record metrics
             WEATHER_API_LATENCY.labels(api='open-meteo-forecast').observe(time.time() - start_time)
             WEATHER_API_REQUESTS.labels(api='open-meteo-forecast', status=weather.status_code).inc()
 
@@ -105,7 +99,7 @@ class Weather:
             weather_data = weather.json()
             current_weather = weather_data.get("current_weather")
             if not current_weather:
-                return {"error": "no current weather data available"}
+                return {"error": "no current weather data"}
             return {
                 "temperature": current_weather.get("temperature"),
                 "windspeed": current_weather.get("windspeed"),

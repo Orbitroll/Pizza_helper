@@ -6,11 +6,9 @@ from prometheus_client import Counter, Histogram
 
 chat_bp = Blueprint('chat', __name__)
 
-# Prometheus Metrics
 GEMINI_REQUESTS = Counter('gemini_api_requests_total', 'Total requests to Gemini API', ['status'])
 GEMINI_LATENCY = Histogram('gemini_api_latency_seconds', 'Latency of Gemini API requests')
 
-# Configure Gemini API
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 
 if GEMINI_API_KEY:
@@ -21,20 +19,16 @@ def ask_bot():
     data = request.get_json()
     user_message = data.get('message', '')
     
-    # 1. Try using Google Gemini (Free Tier) if Key is present
     if GEMINI_API_KEY:
         try:
             start_time = time.time()
-            # Use gemini-flash-latest as it is available and likely has quota
             model = genai.GenerativeModel('gemini-flash-latest')
             
-            # Add system prompt context
             system_prompt = "You are an expert Italian Pizza Chef assistant. You help users with pizza dough recipes, fermentation, and baking tips. You can speak many languages. If the user speaks Hebrew, reply in Hebrew. Keep answers concise and helpful."
             full_prompt = f"{system_prompt}\n\nUser: {user_message}\nChef:"
             
             response = model.generate_content(full_prompt)
             
-            # Record metrics
             GEMINI_LATENCY.observe(time.time() - start_time)
             GEMINI_REQUESTS.labels(status='success').inc()
             
@@ -42,13 +36,10 @@ def ask_bot():
         except Exception as e:
             print(f"ERROR: Gemini API Error: {e}", flush=True)
             GEMINI_REQUESTS.labels(status='error').inc()
-            # Fallback to local logic if API fails
             pass
 
-    # 2. Fallback to Local Logic (Mock AI)
     user_message_lower = user_message.lower()
     
-    # Check for Hebrew characters
     is_hebrew = any("\u0590" <= c <= "\u05EA" for c in user_message)
     
     if is_hebrew:

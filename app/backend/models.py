@@ -16,4 +16,4 @@ class History(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     recipe_name = db.Column(db.String(100), nullable=False)
     date = db.Column(db.DateTime, default=datetime.utcnow)
-    details = db.Column(db.JSON, nullable=False) # Store calculation details like flour, water, etc.
+    details = db.Column(db.JSON, nullable=False)
