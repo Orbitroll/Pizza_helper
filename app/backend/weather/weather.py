@@ -1,4 +1,3 @@
-# ...existing code...
 from flask import Blueprint, request, jsonify
 from classes.classes import Weather
 
@@ -29,4 +28,3 @@ def temperature():
             result["location_name"] = location_name
             
     return jsonify(result)
-# ...existing code...

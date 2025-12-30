@@ -69,7 +69,6 @@ function Home() {
   const [timerDoneSteps, setTimerDoneSteps] = useState(new Set());
   const [bgIndex, setBgIndex] = useState(0);
 
-  // New state for calculator
   const [numPizzas, setNumPizzas] = useState(4);
   const [ballWeight, setBallWeight] = useState(250);
   const [hydration, setHydration] = useState(60);
@@ -82,7 +81,6 @@ function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  // Ask for location permission on mount
   React.useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(

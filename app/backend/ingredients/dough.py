@@ -35,12 +35,6 @@ def calculate_yeast():
         hours = float(request.args.get("hours", 24))
         temperature = float(request.args.get("temperature", 20))
         
-        # Heuristic formula for IDY
-        # Based on a simplified curve where 24h @ 20C is approx 0.05% - 0.1% depending on strength
-        # Let's use: percentage = 150 / (hours * temperature^1.5)
-        # Example: 24h, 20C -> 150 / (24 * 89) = 0.07%
-        # Example: 8h, 20C -> 150 / (8 * 89) = 0.21%
-        # Example: 24h, 25C -> 150 / (24 * 125) = 0.05%
         
         yeast_pct = 150 / (hours * (temperature ** 1.5))
         

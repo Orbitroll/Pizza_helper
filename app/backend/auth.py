@@ -17,10 +17,8 @@ def register():
     if User.query.filter_by(username=username).first():
         return jsonify({'error': 'Username already exists'}), 400
 
-    # Fix: Use default hash method (pbkdf2:sha256)
     hashed_password = generate_password_hash(password)
     
-    # Auto-admin for specific username or if it's the first user (optional, here just checking username)
     is_admin = (username.lower() == 'admin')
     
     new_user = User(username=username, password=hashed_password, is_admin=is_admin)

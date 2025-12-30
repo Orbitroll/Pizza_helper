@@ -5,7 +5,7 @@ import json
 @dataclass(frozen=True)
 class PrefermentSpec:
     name: str
-    hydration_pct: float                # אחוז מים יחסית לקמח שבמחמצת
+    hydration_pct: float
     idy_pct_of_preferment_flour: float = 0.0
     levain_inoculation_pct: float = 0.0
     salt_pct_of_preferment_flour: float = 0.0
