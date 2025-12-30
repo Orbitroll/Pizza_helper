@@ -85,3 +85,15 @@ The project includes a monitoring stack with Prometheus and Grafana.
 The application consists of a React frontend and a Flask backend.
 *   **Frontend**: Runs on port 80 (via Nginx) inside the cluster.
 *   **Backend**: Runs on port 5000 (via Gunicorn) inside the cluster.
+
+## Remote Access (Phone/Other Devices)
+
+To access the application from other devices on your network (like your phone):
+
+1.  Run the helper script:
+    ```powershell
+    .\start-remote-access.ps1
+    ```
+2.  Find your computer's IP address (run `ipconfig`).
+3.  Open the following URL on your phone: `http://<YOUR-IP>:3069`
+
