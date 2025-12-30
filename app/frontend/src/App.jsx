@@ -82,6 +82,20 @@ function Home() {
     return () => clearInterval(interval);
   }, []);
 
+  // Ask for location permission on mount
+  React.useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log("Location access granted");
+        },
+        (error) => {
+          console.log("Location access denied or error:", error);
+        }
+      );
+    }
+  }, []);
+
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
     document.body.dir = lng === 'he' ? 'rtl' : 'ltr';
