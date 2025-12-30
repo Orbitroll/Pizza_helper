@@ -1,4 +1,4 @@
-resource "kubernetes_deployment_v1" "frontend" {
+﻿resource "kubernetes_deployment_v1" "frontend" {
   metadata {
     name      = "pizza-helper-frontend"
     namespace = kubernetes_namespace_v1.pizza_helper.metadata[0].name
@@ -52,9 +52,5 @@ resource "kubernetes_service_v1" "frontend" {
       target_port = 80
       node_port   = 30080
     }
-  }
-}    }
-
-    type = "LoadBalancer"
   }
 }
