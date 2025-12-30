@@ -45,10 +45,15 @@ resource "kubernetes_service_v1" "frontend" {
       app = "pizza-helper-frontend"
     }
 
+    type = "NodePort"
+
     port {
       port        = 80
       target_port = 80
+      node_port   = 30080
     }
+  }
+}    }
 
     type = "LoadBalancer"
   }
