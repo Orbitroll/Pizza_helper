@@ -42,7 +42,7 @@ pipeline {
                             echo "Error: Could not find cluster name in kubeconfig"
                             exit 1
                         fi
-                        kubectl config set-cluster "$CLUSTER_NAME" --server=https:
+                        kubectl config set-cluster "$CLUSTER_NAME" --server=https://kubernetes.docker.internal:6443
                         kubectl config set-cluster "$CLUSTER_NAME" --insecure-skip-tls-verify=true
                         kubectl config unset clusters."$CLUSTER_NAME".certificate-authority-data
                     '''
